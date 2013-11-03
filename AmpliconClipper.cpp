@@ -7,9 +7,9 @@
 #include <stdlib.h>
 #include <cstring>
 
+#include "options.hpp"
 #include "read.hpp"
 #include "amplicon.hpp"
-#include "options.hpp"
 
 std::vector<std::string> header_strings;
 std::vector<std::read> read_container;
@@ -19,7 +19,7 @@ std::amplicon_strands reverseAmplicons;
 
 void processReadWithAmplicon(const std::amplicon& Amplicon, std::read& Read)
 {
-    int curPos, toCut, overshoot, start, cLength;
+    int curPos, toCut, overshoot, start, cLength = 0;
     char cCigar;
     std::string newCIGAR;
 
@@ -70,6 +70,7 @@ void processReadWithAmplicon(const std::amplicon& Amplicon, std::read& Read)
         tempCigar = 'M' + Read.CIGAR;
         toCut = 0;
         start = tempCigar.length() - 1;
+        cCigar = tempCigar.at(start);
 
         int i = tempCigar.length() - 2;
         while ((curPos >= Amplicon.insertEnd) || (cCigar != 'M')) {
@@ -144,26 +145,12 @@ int main(int argc, char** argv)
     sam_input_File.close();
 
     // read amplicon input file
-    std::ifstream amplicon_input_File(amplicon_input.c_str());
-    if (amplicon_input_File.is_open()) {
-        while (getline(amplicon_input_File, line))
-        {
-            Amplicons.push_back(std::amplicon(line));
-        }
-    }
-    amplicon_input_File.close();
-    for (int i = 0; i < Amplicons.size(); ++i)
-    {
-        if (Amplicons[i].isForward)
-            forwardAmplicons.push_back(&Amplicons[i]);
-        if (Amplicons[i].isReverse)
-            reverseAmplicons.push_back(&Amplicons[i]);
-    }
+    read_amplicon_input(amplicon_input, Amplicons, forwardAmplicons, reverseAmplicons);
 
     // Perform actual trimming
     std::amplicon_strands::const_iterator iter_start, iter_end, best_amplicon;
     int overlap, max_overlap = 0;
-    for (int i = 0; i < read_container.size(); ++i) {
+    for (uint32_t i = 0; i < read_container.size(); ++i) {
         if (read_container[i].isReverse) {
             // reverse strand read
             iter_start = reverseAmplicons.begin();
@@ -210,12 +197,12 @@ int main(int argc, char** argv)
     if (sam_output_File.is_open())
     {
         // header:
-        for (int i = 0; i < header_strings.size(); ++i)
+        for (uint32_t i = 0; i < header_strings.size(); ++i)
         {
             sam_output_File << header_strings[i] << '\n';
         }
 
-        for (int i = 0; i < read_container.size(); ++i)
+        for (uint32_t i = 0; i < read_container.size(); ++i)
         {
             if (read_container[i].keep)
                 sam_output_File << read_container[i] << '\n';
@@ -227,7 +214,7 @@ int main(int argc, char** argv)
     if (write_statistics) {
         std::ofstream stats_output_File("stats.txt");
         stats_output_File << "M\tI\tD\n";
-        for (int i = 0; i < read_container.size(); ++i)
+        for (uint32_t i = 0; i < read_container.size(); ++i)
         {
             if (read_container[i].keep)
                 stats_output_File << read_container[i].CigarM << '\t' << read_container[i].CigarI << '\t' << read_container[i].CigarD << '\n';

@@ -1,7 +1,9 @@
 .PHONY: clean main
 
+CFLAGS=-O3
+
 main:
-	g++ -O3 -std=c++0x AmpliconClipper.cpp -o AmpliconClipper
+	$(CXX) $(CFLAGS) -Wall -std=c++0x AmpliconClipper.cpp -o AmpliconClipper
 
 clean:
 	rm -f AmpliconClipper *.o

@@ -4,35 +4,40 @@
 std::string sam_input;
 std::string sam_output;
 std::string amplicon_input;
+std::string ref_input;
 
 // booleans:
 bool write_statistics = false;
 bool help_flag = false;
-double min_amplicon_coverage = 0;
+bool amplicon_input_is_fasta = false;
+bool reference_provided = false;
 
 int max_insertions = INT_MAX;
 int max_deletions = INT_MAX;
 int max_cont_deletion = INT_MAX;
+double min_amplicon_coverage = 0;
 
 void about()
 {
     std::cout << "AmpliconClipper\n";
     std::cout << "\t by David Seifert 2013\n\n";
     std::cout << "Options:\n";
-    std::cout << "\t-i : input SAM file\n";
-    std::cout << "\t-o : output SAM file\n";
-    std::cout << "\t-a : input amplicon file\n";
-    std::cout << "\t-S : write statistics of reads\n";
-    std::cout << "\t-I : maximum insertions threshold\n";
-    std::cout << "\t-D : maximum deletions threshold\n";
-    std::cout << "\t-C : minimum coverage threshold as a fraction of the amplicon insert\n";
-    std::cout << "\t--mD : maximum adjacent deletions\n";
+    std::cout << "\t -i   : input SAM file\n";
+    std::cout << "\t -o   : output SAM file\n";
+    std::cout << "\t -a   : input amplicon file\n";
+    std::cout << "\t -S   : write statistics of reads\n";
+    std::cout << "\t -I   : maximum insertions threshold\n";
+    std::cout << "\t -D   : maximum deletions threshold\n";
+    std::cout << "\t -C   : minimum coverage threshold as a fraction of the amplicon insert\n";
+    std::cout << "\t--mD  : maximum adjacent deletions\n";
+    std::cout << "\t--ref : provide the reference genome in order to locate amplicons via their primers\n";
 }
 
 #include <getopt.h>
 static struct option long_options[] =
 {
     {"mD", required_argument, 0, 1000},
+    {"ref", required_argument, 0, 1001},
     {0, 0, 0, 0}
 };
 
@@ -81,6 +86,11 @@ void parse_arguments(int argc, char** argv)
 
         case 1000:
             max_cont_deletion = atoi(optarg);
+            break;
+
+        case 1001:
+            reference_provided = true;
+            ref_input = optarg;
             break;
 
         case 0:

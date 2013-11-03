@@ -20,7 +20,7 @@ public:
     std::string QUAL;
     std::string MISC;
 
-    // other useful flags:
+    // other flags:
     bool isReverse;
     int EndPOS;
     bool keep;
@@ -35,8 +35,8 @@ public:
     read(std::string line)
     {
         line.append("\t");
-        int pos = line.find('\t');
-        int token = 0;
+        uint64_t pos = line.find('\t');
+        uint32_t token = 0;
         keep = true;
 
         while (pos != std::string::npos)
@@ -122,13 +122,12 @@ public:
         int cLength, start = 0;
         maxContigDel = 0;
 
-        for (int i = 1; i < CIGAR.length(); ++i)
+        for (uint32_t i = 1; i < CIGAR.length(); ++i)
         {
             cChar = CIGAR.at(i);
             if (std::isalpha(cChar))
             {
                 cLength = atoi(CIGAR.substr(start, i - start).c_str());
-                //std::cout << cChar << ": " << cLength << '\n';
                 switch (cChar)
                 {
                 case 'M':
@@ -147,7 +146,7 @@ public:
                 start = i+1;
             }
         }
-        //std::cout << "======> " << lengthOnGenome << '\n';
+
         LengthOnGenome = CigarM+CigarD;
     }
 };
