@@ -23,94 +23,102 @@ void processReadWithAmplicon(const std::amplicon& Amplicon, std::read& Read)
     char cCigar;
     std::string newCIGAR;
 
-    // trim the lower end
-    if (std::min(Read.EndPOS, Amplicon.insertStart) - std::max(Read.POS, Amplicon.ampliconStart) > 0)
+    if (static_cast<double>(std::min(Read.EndPOS, Amplicon.insertEnd) - std::max(Read.POS, Amplicon.insertStart))/(Amplicon.insertEnd - Amplicon.insertStart) < min_amplicon_coverage)
     {
-        // there is overlap with the 5' PCR primer
-        curPos = Read.POS;
-        toCut = 0;
-        start = 0;
-        cCigar = '-';
-
-        int i = 0;
-        while ((curPos <= Amplicon.insertStart) || (cCigar == 'D'))
-        {
-            cLength = 0;
-            while (isdigit(cCigar = Read.CIGAR.at(++i)));
-            cLength = atoi(Read.CIGAR.substr(start, i - start).c_str());
-
-            if (cCigar != 'I')
-            {
-                curPos += cLength;
-            }
-            if (cCigar != 'D')
-            {
-                toCut += cLength;
-            }
-
-            start = i+1;
-        }
-        overshoot = (curPos - Amplicon.insertStart);
-        int startOffset = (overshoot >= cLength ? cLength : overshoot);
-
-        toCut -= startOffset;
-
-        newCIGAR = std::to_string(startOffset);
-        newCIGAR += cCigar;
-        newCIGAR.append(Read.CIGAR.substr(start));
-
-        Read.CIGAR = newCIGAR;
-        Read.POS = curPos - startOffset;
-        Read.SEQ.erase(0, toCut);
-        if (Read.QUAL != "*")
-            Read.QUAL.erase(0, toCut);
+        // read lies wholely within primer
+        Read.keep = false;
     }
-
-    // trim upper end
-    std::string tempCigar;
-    if (std::min(Read.EndPOS, Amplicon.ampliconEnd) - std::max(Read.POS, Amplicon.insertEnd) > 0)
+    else
     {
-        // there is overlap with the 3' PCR primer
-        curPos = Read.EndPOS;
-        tempCigar = 'M' + Read.CIGAR;
-        toCut = 0;
-        start = tempCigar.length() - 1;
-        cCigar = tempCigar.at(start);
-
-        int i = tempCigar.length() - 2;
-        while ((curPos >= Amplicon.insertEnd) || (cCigar != 'M'))
+        // trim the lower end
+        if (std::min(Read.EndPOS, Amplicon.insertStart) - std::max(Read.POS, Amplicon.ampliconStart) > 0)
         {
-            cCigar = tempCigar.at(start);
-            cLength = 0;
-            while (isdigit(tempCigar.at(--i)));
-            cLength = atoi(tempCigar.substr(i+1, i+1 - start).c_str());
+            // there is overlap with the 5' PCR primer
+            curPos = Read.POS;
+            toCut = 0;
+            start = 0;
+            cCigar = '-';
 
-            if (cCigar != 'I')
+            int i = 0;
+            while ((curPos <= Amplicon.insertStart) || (cCigar == 'D'))
             {
-                curPos -= cLength;
-            }
-            if (cCigar != 'D')
-            {
-                toCut += cLength;
-            }
+                cLength = 0;
+                while (isdigit(cCigar = Read.CIGAR.at(++i)));
+                cLength = atoi(Read.CIGAR.substr(start, i - start).c_str());
 
-            start = i;
-            --i;
+                if (cCigar != 'I')
+                {
+                    curPos += cLength;
+                }
+                if (cCigar != 'D')
+                {
+                    toCut += cLength;
+                }
+
+                start = i+1;
+            }
+            overshoot = (curPos - Amplicon.insertStart);
+            int startOffset = (overshoot >= cLength ? cLength : overshoot);
+
+            toCut -= startOffset;
+
+            newCIGAR = std::to_string(startOffset);
+            newCIGAR += cCigar;
+            newCIGAR.append(Read.CIGAR.substr(start));
+
+            Read.CIGAR = newCIGAR;
+            Read.POS = curPos - startOffset;
+            Read.SEQ.erase(0, toCut);
+            if (Read.QUAL != "*")
+                Read.QUAL.erase(0, toCut);
         }
 
-        overshoot = (Amplicon.insertEnd - curPos);
-        int endOffset = (overshoot >= cLength ? cLength : overshoot);
+        // trim upper end
+        std::string tempCigar;
+        if (std::min(Read.EndPOS, Amplicon.ampliconEnd) - std::max(Read.POS, Amplicon.insertEnd) > 0)
+        {
+            // there is overlap with the 3' PCR primer
+            curPos = Read.EndPOS;
+            tempCigar = 'M' + Read.CIGAR;
+            toCut = 0;
+            start = tempCigar.length() - 1;
+            cCigar = tempCigar.at(start);
 
-        toCut -= endOffset;
+            int i = tempCigar.length() - 2;
+            while ((curPos >= Amplicon.insertEnd) || (cCigar != 'M'))
+            {
+                cCigar = tempCigar.at(start);
+                cLength = 0;
+                while (isdigit(tempCigar.at(--i)));
+                cLength = atoi(tempCigar.substr(i+1, i+1 - start).c_str());
 
-        newCIGAR = tempCigar.substr(1, start);
-        newCIGAR.append(std::to_string(endOffset));
-        newCIGAR += cCigar;
+                if (cCigar != 'I')
+                {
+                    curPos -= cLength;
+                }
+                if (cCigar != 'D')
+                {
+                    toCut += cLength;
+                }
 
-        Read.CIGAR = newCIGAR;
-        Read.SEQ.erase(Read.SEQ.length()-toCut, std::string::npos);
-        if (Read.QUAL != "*")
-            Read.QUAL.erase(Read.QUAL.length()-toCut, std::string::npos);
+                start = i;
+                --i;
+            }
+
+            overshoot = (Amplicon.insertEnd - curPos);
+            int endOffset = (overshoot >= cLength ? cLength : overshoot);
+
+            toCut -= endOffset;
+
+            newCIGAR = tempCigar.substr(1, start);
+            newCIGAR.append(std::to_string(endOffset));
+            newCIGAR += cCigar;
+
+            Read.CIGAR = newCIGAR;
+            Read.SEQ.erase(Read.SEQ.length()-toCut, std::string::npos);
+            if (Read.QUAL != "*")
+                Read.QUAL.erase(Read.QUAL.length()-toCut, std::string::npos);
+        }
     }
 
     // set discard flag for unwanted amplicons
@@ -193,9 +201,6 @@ int main(int argc, char** argv)
                 read_container[i].keep = false;
 
             if (read_container[i].CigarD > max_deletions)
-                read_container[i].keep = false;
-
-            if (static_cast<double>(read_container[i].LengthOnGenome)/((*best_amplicon)->insertEnd - (*best_amplicon)->insertStart) < min_amplicon_coverage)
                 read_container[i].keep = false;
 
             if (read_container[i].maxContigDel > max_cont_deletion)
