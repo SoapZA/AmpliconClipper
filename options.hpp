@@ -1,4 +1,8 @@
 #include <limits.h>
+#include <map>
+
+std::map<char, char> complement;
+
 /* parameters: */
 // input files:
 std::string sam_input;
@@ -19,7 +23,7 @@ double min_amplicon_coverage = 0;
 
 void about()
 {
-    std::cout << "AmpliconClipper\n";
+    std::cout << "AmpliconClipper " << VERSION << "\n";
     std::cout << "\t by David Seifert 2013\n\n";
     std::cout << "Options:\n";
     std::cout << "\t -i   : input SAM file\n";
@@ -113,4 +117,20 @@ void parse_arguments(int argc, char** argv)
         about();
         exit(EXIT_SUCCESS);
     }
+
+    complement['A'] = 'T';
+    complement['T'] = 'A';
+    complement['C'] = 'G';
+    complement['G'] = 'C';
+    complement['K'] = 'M';
+    complement['M'] = 'K';
+    complement['R'] = 'Y';
+    complement['Y'] = 'R';
+    complement['S'] = 'S';
+    complement['W'] = 'W';
+    complement['B'] = 'V';
+    complement['V'] = 'B';
+    complement['H'] = 'D';
+    complement['D'] = 'H';
+    complement['N'] = 'N';
 }

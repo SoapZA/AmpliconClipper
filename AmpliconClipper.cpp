@@ -1,11 +1,13 @@
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <algorithm>
 #include <vector>
 #include <climits>
 #include <stdlib.h>
 #include <cstring>
+#include <stdint.h>
 
 #include "options.hpp"
 #include "read.hpp"
@@ -21,7 +23,7 @@ void processReadWithAmplicon(const std::amplicon& Amplicon, std::read& Read)
 {
     int curPos, toCut, overshoot, start, cLength = 0;
     char cCigar;
-    std::string newCIGAR;
+    std::stringstream newCIGAR;
 
     if (static_cast<double>(std::min(Read.EndPOS, Amplicon.insertEnd) - std::max(Read.POS, Amplicon.insertStart))/(Amplicon.insertEnd - Amplicon.insertStart) < min_amplicon_coverage)
     {
@@ -62,11 +64,17 @@ void processReadWithAmplicon(const std::amplicon& Amplicon, std::read& Read)
 
             toCut -= startOffset;
 
+            newCIGAR.clear();
+            newCIGAR.str(std::string());
+            newCIGAR << startOffset << cCigar << Read.CIGAR.substr(start);
+
+            /*
             newCIGAR = std::to_string(startOffset);
             newCIGAR += cCigar;
             newCIGAR.append(Read.CIGAR.substr(start));
+            */
 
-            Read.CIGAR = newCIGAR;
+            Read.CIGAR = newCIGAR.str();
             Read.POS = curPos - startOffset;
             Read.SEQ.erase(0, toCut);
             if (Read.QUAL != "*")
@@ -110,11 +118,17 @@ void processReadWithAmplicon(const std::amplicon& Amplicon, std::read& Read)
 
             toCut -= endOffset;
 
+            newCIGAR.clear();
+            newCIGAR.str(std::string());
+            newCIGAR << tempCigar.substr(1, start) << endOffset << cCigar;
+
+            /*
             newCIGAR = tempCigar.substr(1, start);
             newCIGAR.append(std::to_string(endOffset));
             newCIGAR += cCigar;
+            */
 
-            Read.CIGAR = newCIGAR;
+            Read.CIGAR = newCIGAR.str();
             Read.SEQ.erase(Read.SEQ.length()-toCut, std::string::npos);
             if (Read.QUAL != "*")
                 Read.QUAL.erase(Read.QUAL.length()-toCut, std::string::npos);
@@ -205,6 +219,9 @@ int main(int argc, char** argv)
 
             if (read_container[i].maxContigDel > max_cont_deletion)
                 read_container[i].keep = false;
+        }
+        else {
+            read_container[i].keep = false;
         }
     }
 

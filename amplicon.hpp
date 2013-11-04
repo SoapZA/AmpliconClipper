@@ -1,4 +1,4 @@
-#include <map>
+
 #include <utility>
 #include <cassert>
 
@@ -7,25 +7,6 @@ namespace std
 
 std::string reverse_complement(const std::string& sequence)
 {
-    std::map<char, char> complement =
-    {
-        {'A','T'},
-        {'T','A'},
-        {'C','G'},
-        {'G','C'},
-        {'K','M'},
-        {'M','K'},
-        {'R','Y'},
-        {'Y','R'},
-        {'S','S'},
-        {'W','W'},
-        {'B','V'},
-        {'V','B'},
-        {'H','D'},
-        {'D','H'},
-        {'N','N'}
-    };
-
     std::string result;
     for (int i = sequence.length() - 1; i >=0; --i )
     {
