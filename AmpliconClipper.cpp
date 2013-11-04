@@ -69,6 +69,7 @@ void processReadWithAmplicon(const std::amplicon& Amplicon, std::read& Read)
             newCIGAR << startOffset << cCigar << Read.CIGAR.substr(start);
 
             /*
+            // C++11:
             newCIGAR = std::to_string(startOffset);
             newCIGAR += cCigar;
             newCIGAR.append(Read.CIGAR.substr(start));
@@ -123,6 +124,7 @@ void processReadWithAmplicon(const std::amplicon& Amplicon, std::read& Read)
             newCIGAR << tempCigar.substr(1, start) << endOffset << cCigar;
 
             /*
+            // C++11:
             newCIGAR = tempCigar.substr(1, start);
             newCIGAR.append(std::to_string(endOffset));
             newCIGAR += cCigar;
@@ -220,7 +222,8 @@ int main(int argc, char** argv)
             if (read_container[i].maxContigDel > max_cont_deletion)
                 read_container[i].keep = false;
         }
-        else {
+        else
+        {
             read_container[i].keep = false;
         }
     }
