@@ -1,6 +1,6 @@
 # AmpliconClipper
 AmpliconClipper performes post-alignment PCR Primer removal. In a multitude of situations, pre-alignment clipping is not feasible; either because the primers 
-themselves become progressively shorter or the sequencing platform is rather noisy (AmpliconClipper was designed with Pacific Biosciences data in mind.)
+themselves become progressively shorter or the sequencing platform is rather noisy (AmpliconClipper was designed with Pacific Biosciences data in mind).
 
 ## Features
  - Takes SAM as input
@@ -9,7 +9,7 @@ themselves become progressively shorter or the sequencing platform is rather noi
  - Can discard reads with a below fraction coverage of an amplicon
 
 #### PREREQUISITES TO BUILD:
- - You will require a C++ compiler that can hanlde C++0x (which includes C++11 compliant compilers, obviously)
+ - You will require a C++ compiler that can handle C++0x (which includes C++11 compliant compilers)
 
 ## Building:
 ```
