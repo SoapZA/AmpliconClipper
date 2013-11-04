@@ -5,8 +5,10 @@
 namespace std
 {
 
-std::string reverse_complement(const std::string& sequence) {
-    std::map<char, char> complement = {
+std::string reverse_complement(const std::string& sequence)
+{
+    std::map<char, char> complement =
+    {
         {'A','T'},
         {'T','A'},
         {'C','G'},
@@ -25,7 +27,8 @@ std::string reverse_complement(const std::string& sequence) {
     };
 
     std::string result;
-    for (int i = sequence.length() - 1; i >=0; --i ) {
+    for (int i = sequence.length() - 1; i >=0; --i )
+    {
         result += complement.find(sequence[i])->second;
     }
     return result;
@@ -33,22 +36,24 @@ std::string reverse_complement(const std::string& sequence) {
 
 uint32_t hamming_distance(const std::string& A, const std::string& B)
 {
-	uint32_t distance = 0;
-	assert(A.length() == B.length());
+    uint32_t distance = 0;
+    assert(A.length() == B.length());
 
-	for (uint32_t i = 0; i < A.length(); ++i)
-	{
-		distance += (A[i] != B[i]);
-	}
+    for (uint32_t i = 0; i < A.length(); ++i)
+    {
+        distance += (A[i] != B[i]);
+    }
 
-	return distance;
+    return distance;
 }
 
-void find_best_overlap(const std::string& genome, const std::string& primer, int& pos, int& min_hamming_distance) {
+void find_best_overlap(const std::string& genome, const std::string& primer, int& pos, int& min_hamming_distance)
+{
     min_hamming_distance = INT_MAX;
     int ham_distance;
 
-    for (uint32_t i = 0; i < genome.length()-primer.length(); ++i) {
+    for (uint32_t i = 0; i < genome.length()-primer.length(); ++i)
+    {
         ham_distance = hamming_distance(genome.substr(i, primer.length()), primer);
 
         if (ham_distance < min_hamming_distance)
@@ -147,7 +152,8 @@ void read_amplicon_input(const std::string& input_file, std::amplicons_list& inp
         if (line[0] == '>')
         {
             // FASTA input
-            if (!reference_provided) {
+            if (!reference_provided)
+            {
                 std::cout << "Provide a reference genome with --ref in order to determine amplicon locations\n";
                 exit(EXIT_FAILURE);
             }
@@ -159,13 +165,16 @@ void read_amplicon_input(const std::string& input_file, std::amplicons_list& inp
             std::pair< std::map<std::string, primers>::iterator, bool> primers_list_iter;
 
             // load primers
-            while (getline(amplicon_input_File, line)) {
+            while (getline(amplicon_input_File, line))
+            {
                 line.erase(std::remove(line.begin(), line.end(), '\n'), line.end());
-                if (line[0] != '>') {
+                if (line[0] != '>')
+                {
                     // primer sequence
                     temp.erase(0, 1);
                     length_to_copy = temp.length();
-                    if (temp.find('_') != std::string::npos) {
+                    if (temp.find('_') != std::string::npos)
+                    {
                         // primer pair with directionality
                         isForward = (temp[length_to_copy-1] == 'F');
                         length_to_copy -= 2;
@@ -173,15 +182,18 @@ void read_amplicon_input(const std::string& input_file, std::amplicons_list& inp
                     temp.erase(length_to_copy);
 
                     primers_list_iter = primers_list.insert(std::pair< std::string, primers >(temp, primers()));
-                    if (primers_list_iter.second) {
+                    if (primers_list_iter.second)
+                    {
                         // amplicon was created
                         (primers_list_iter.first)->second.first = line;
                     }
-                    else {
+                    else
+                    {
                         // amplicon already exists
                         if ((primers_list_iter.first)->second.second.empty())
                             (primers_list_iter.first)->second.second = line;
-                        else {
+                        else
+                        {
                             std::cout << "Too many primers for " << temp << "!\n";
                             exit(EXIT_FAILURE);
                         }
@@ -197,23 +209,28 @@ void read_amplicon_input(const std::string& input_file, std::amplicons_list& inp
             // load reference genome FASTA:
             std::string genome;
             std::ifstream genome_input_File(ref_input.c_str());
-            if (genome_input_File.is_open()) {
+            if (genome_input_File.is_open())
+            {
                 getline(genome_input_File, line); // unimportant, contains the name of the reference genome
 
-                while (getline(genome_input_File, line)) {
+                while (getline(genome_input_File, line))
+                {
                     line.erase(std::remove(line.begin(), line.end(), '\n'), line.end());
                     genome.append(line);
                 }
             }
-            else {
+            else
+            {
                 std::cout << "The reference genome '" << ref_input << "' does not exist!\n";
                 exit(EXIT_FAILURE);
             }
             genome_input_File.close();
 
             // determine position of primers and check for missing primer:
-            for (std::map<std::string, primers>::iterator iter = primers_list.begin(); iter != primers_list.end(); ++iter) {
-                if (iter->second.second.empty()) {
+            for (std::map<std::string, primers>::iterator iter = primers_list.begin(); iter != primers_list.end(); ++iter)
+            {
+                if (iter->second.second.empty())
+                {
                     std::cout << "Amplicon: " << iter->first << " is missing a second primer!\n";
                     exit(EXIT_FAILURE);
                 }
@@ -229,10 +246,12 @@ void read_amplicon_input(const std::string& input_file, std::amplicons_list& inp
                 // search with reverse complemented primer
                 find_best_overlap(genome, reverse_complement(iter->second.first), pos_primer_rc, ham_distance_rc);
 
-                if (ham_distance < ham_distance_rc) {
+                if (ham_distance < ham_distance_rc)
+                {
                     primer1_pos = pos_primer;
                 }
-                else {
+                else
+                {
                     primer1_pos = pos_primer_rc;
                 }
                 ++primer1_pos;
@@ -244,10 +263,12 @@ void read_amplicon_input(const std::string& input_file, std::amplicons_list& inp
                 // search with reverse complemented primer
                 find_best_overlap(genome, reverse_complement(iter->second.second), pos_primer_rc, ham_distance_rc);
 
-                if (ham_distance < ham_distance_rc) {
+                if (ham_distance < ham_distance_rc)
+                {
                     primer2_pos = pos_primer;
                 }
-                else {
+                else
+                {
                     primer2_pos = pos_primer_rc;
                 }
                 ++primer2_pos;
@@ -258,7 +279,6 @@ void read_amplicon_input(const std::string& input_file, std::amplicons_list& inp
                     std::swap(primer1_length, primer2_length);
                 }
 
-                //std::cout << "Best position for Primer 1 of " << iter->first << ": " << best_pos << " with HD: " << hamming_distance << '\n';
                 input_Amplicons.push_back(std::amplicon(iter->first, primer1_pos, primer2_pos+primer2_length, primer1_pos+primer1_length, primer2_pos, false));
             }
         }

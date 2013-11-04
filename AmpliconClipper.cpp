@@ -24,7 +24,8 @@ void processReadWithAmplicon(const std::amplicon& Amplicon, std::read& Read)
     std::string newCIGAR;
 
     // trim the lower end
-    if (std::min(Read.EndPOS, Amplicon.insertStart) - std::max(Read.POS, Amplicon.ampliconStart) > 0) {
+    if (std::min(Read.EndPOS, Amplicon.insertStart) - std::max(Read.POS, Amplicon.ampliconStart) > 0)
+    {
         // there is overlap with the 5' PCR primer
         curPos = Read.POS;
         toCut = 0;
@@ -32,15 +33,18 @@ void processReadWithAmplicon(const std::amplicon& Amplicon, std::read& Read)
         cCigar = '-';
 
         int i = 0;
-        while ((curPos <= Amplicon.insertStart) || (cCigar == 'D')) {
+        while ((curPos <= Amplicon.insertStart) || (cCigar == 'D'))
+        {
             cLength = 0;
             while (isdigit(cCigar = Read.CIGAR.at(++i)));
             cLength = atoi(Read.CIGAR.substr(start, i - start).c_str());
 
-            if (cCigar != 'I') {
+            if (cCigar != 'I')
+            {
                 curPos += cLength;
             }
-            if (cCigar != 'D') {
+            if (cCigar != 'D')
+            {
                 toCut += cLength;
             }
 
@@ -64,7 +68,8 @@ void processReadWithAmplicon(const std::amplicon& Amplicon, std::read& Read)
 
     // trim upper end
     std::string tempCigar;
-    if (std::min(Read.EndPOS, Amplicon.ampliconEnd) - std::max(Read.POS, Amplicon.insertEnd) > 0) {
+    if (std::min(Read.EndPOS, Amplicon.ampliconEnd) - std::max(Read.POS, Amplicon.insertEnd) > 0)
+    {
         // there is overlap with the 3' PCR primer
         curPos = Read.EndPOS;
         tempCigar = 'M' + Read.CIGAR;
@@ -73,16 +78,19 @@ void processReadWithAmplicon(const std::amplicon& Amplicon, std::read& Read)
         cCigar = tempCigar.at(start);
 
         int i = tempCigar.length() - 2;
-        while ((curPos >= Amplicon.insertEnd) || (cCigar != 'M')) {
+        while ((curPos >= Amplicon.insertEnd) || (cCigar != 'M'))
+        {
             cCigar = tempCigar.at(start);
             cLength = 0;
             while (isdigit(tempCigar.at(--i)));
             cLength = atoi(tempCigar.substr(i+1, i+1 - start).c_str());
 
-            if (cCigar != 'I') {
+            if (cCigar != 'I')
+            {
                 curPos -= cLength;
             }
-            if (cCigar != 'D') {
+            if (cCigar != 'D')
+            {
                 toCut += cLength;
             }
 
@@ -133,7 +141,6 @@ int main(int argc, char** argv)
         {
             line.erase(std::remove(line.begin(), line.end(), '\n'), line.end());
             read_container.push_back(std::read(line));
-            //std::cout << std::read(line) << '\n';
         }
         while (getline(sam_input_File, line));
     }
@@ -150,13 +157,16 @@ int main(int argc, char** argv)
     // Perform actual trimming
     std::amplicon_strands::const_iterator iter_start, iter_end, best_amplicon;
     int overlap, max_overlap = 0;
-    for (uint32_t i = 0; i < read_container.size(); ++i) {
-        if (read_container[i].isReverse) {
+    for (uint32_t i = 0; i < read_container.size(); ++i)
+    {
+        if (read_container[i].isReverse)
+        {
             // reverse strand read
             iter_start = reverseAmplicons.begin();
             iter_end = reverseAmplicons.end();
         }
-        else {
+        else
+        {
             // forward strand read
             iter_start = forwardAmplicons.begin();
             iter_end = forwardAmplicons.end();
@@ -165,16 +175,17 @@ int main(int argc, char** argv)
         // choose the best amplicon based on overlap
         max_overlap = 0;
         overlap = 0;
-        for (std::amplicon_strands::const_iterator j = iter_start; j != iter_end; ++j) {
+        for (std::amplicon_strands::const_iterator j = iter_start; j != iter_end; ++j)
+        {
             overlap = (*j)->readOverlap(read_container[i]);
-            if (overlap > max_overlap) {
+            if (overlap > max_overlap)
+            {
                 max_overlap = overlap;
                 best_amplicon = j;
             }
         }
         if (max_overlap > 0)
         {
-            //std::cout << "Employing Amplicon: " << (*best_amplicon)->NAME << '\n';
             processReadWithAmplicon(*(*best_amplicon), read_container[i]);
             read_container[i].calculateLengthOnGenome();
 
@@ -211,7 +222,8 @@ int main(int argc, char** argv)
     sam_output_File.close();
 
     // write statistics
-    if (write_statistics) {
+    if (write_statistics)
+    {
         std::ofstream stats_output_File("stats.txt");
         stats_output_File << "M\tI\tD\n";
         for (uint32_t i = 0; i < read_container.size(); ++i)
