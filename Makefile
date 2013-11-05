@@ -1,6 +1,6 @@
 .PHONY: clean main
 
-VERSION=0.1-beta
+VERSION=0.2-beta
 CFLAGS=-O3
 
 main:

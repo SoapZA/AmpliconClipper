@@ -281,6 +281,8 @@ void read_amplicon_input(const std::string& input_file, std::amplicons_list& inp
         }
         else
         {
+            amplicon_input_File.seekg(0, ios::beg);
+
             // AmpliconClipper input
             while (getline(amplicon_input_File, line))
                 input_Amplicons.push_back(std::amplicon(line));

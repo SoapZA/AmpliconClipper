@@ -25,7 +25,8 @@ void processReadWithAmplicon(const std::amplicon& Amplicon, std::read& Read)
     char cCigar;
     std::stringstream newCIGAR;
 
-    if (static_cast<double>(std::min(Read.EndPOS, Amplicon.insertEnd) - std::max(Read.POS, Amplicon.insertStart))/(Amplicon.insertEnd - Amplicon.insertStart) < min_amplicon_coverage)
+    // set discard flag for unwanted amplicons
+    if ((std::min(Read.EndPOS, Amplicon.insertEnd) - std::max(Read.POS, Amplicon.insertStart) <= 0) || (Amplicon.discardReads))
     {
         // read lies wholely within primer
         Read.keep = false;
@@ -42,7 +43,7 @@ void processReadWithAmplicon(const std::amplicon& Amplicon, std::read& Read)
             cCigar = '-';
 
             int i = 0;
-            while ((curPos <= Amplicon.insertStart) || (cCigar == 'D'))
+            while ((curPos < Amplicon.insertStart) || (cCigar != 'M'))
             {
                 cLength = 0;
                 while (isdigit(cCigar = Read.CIGAR.at(++i)));
@@ -130,6 +131,7 @@ void processReadWithAmplicon(const std::amplicon& Amplicon, std::read& Read)
             newCIGAR += cCigar;
             */
 
+            Read.EndPOS = curPos + endOffset;
             Read.CIGAR = newCIGAR.str();
             Read.SEQ.erase(Read.SEQ.length()-toCut, std::string::npos);
             if (Read.QUAL != "*")
@@ -137,9 +139,14 @@ void processReadWithAmplicon(const std::amplicon& Amplicon, std::read& Read)
         }
     }
 
-    // set discard flag for unwanted amplicons
-    if (Amplicon.discardReads)
+    Read.calculateLengthOnGenome();
+    assert(Read.EndPOS - Read.POS == Read.LengthOnGenome);
+
+    if (static_cast<double>(std::min(Read.EndPOS, Amplicon.insertEnd) - std::max(Read.POS, Amplicon.insertStart))/(Amplicon.insertEnd - Amplicon.insertStart) < min_amplicon_coverage)
+    {
+        // is too short for amplicon
         Read.keep = false;
+    }
 }
 
 
