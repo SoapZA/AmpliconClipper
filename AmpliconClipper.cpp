@@ -43,7 +43,7 @@ void processReadWithAmplicon(const std::amplicon& Amplicon, std::read& Read)
             cCigar = '-';
 
             int i = 0;
-            while ((curPos < Amplicon.insertStart) || (cCigar != 'M'))
+            while ((curPos <= Amplicon.insertStart) || (cCigar != 'M'))
             {
                 cLength = 0;
                 while (isdigit(cCigar = Read.CIGAR.at(++i)));
@@ -147,6 +147,8 @@ void processReadWithAmplicon(const std::amplicon& Amplicon, std::read& Read)
         // is too short for amplicon
         Read.keep = false;
     }
+    //else
+    //    std::cout << Read.QNAME << " : " << std::min(Read.EndPOS, Amplicon.insertEnd) - std::max(Read.POS, Amplicon.insertStart) << " : " << static_cast<double>(std::min(Read.EndPOS, Amplicon.insertEnd) - std::max(Read.POS, Amplicon.insertStart))/(Amplicon.insertEnd - Amplicon.insertStart) << "\n";
 }
 
 
@@ -154,6 +156,13 @@ int main(int argc, char** argv)
 {
     parse_arguments(argc, argv);
     std::string line;
+
+    if (!(amplicon_input.empty()))
+    {
+        // read amplicon input file
+        read_amplicon_input(amplicon_input, Amplicons, forwardAmplicons, reverseAmplicons);
+    }
+
 
     // read SAM input file
     std::ifstream sam_input_File(sam_input.c_str());
@@ -182,56 +191,60 @@ int main(int argc, char** argv)
     }
     sam_input_File.close();
 
-    // read amplicon input file
-    read_amplicon_input(amplicon_input, Amplicons, forwardAmplicons, reverseAmplicons);
-
     // Perform actual trimming
     std::amplicon_strands::const_iterator iter_start, iter_end, best_amplicon;
     int overlap, max_overlap = 0;
     for (uint32_t i = 0; i < read_container.size(); ++i)
     {
-        if (read_container[i].isReverse)
-        {
-            // reverse strand read
-            iter_start = reverseAmplicons.begin();
-            iter_end = reverseAmplicons.end();
-        }
-        else
-        {
-            // forward strand read
-            iter_start = forwardAmplicons.begin();
-            iter_end = forwardAmplicons.end();
-        }
+        read_container[i].clipNBasesFromFront(n_BasesFront);
+        read_container[i].clipNBasesFromBack(n_BasesBack);
 
-        // choose the best amplicon based on overlap
-        max_overlap = 0;
-        overlap = 0;
-        for (std::amplicon_strands::const_iterator j = iter_start; j != iter_end; ++j)
-        {
-            overlap = (*j)->readOverlap(read_container[i]);
-            if (overlap > max_overlap)
-            {
-                max_overlap = overlap;
-                best_amplicon = j;
-            }
-        }
-        if (max_overlap > 0)
-        {
-            processReadWithAmplicon(*(*best_amplicon), read_container[i]);
-            read_container[i].calculateLengthOnGenome();
-
-            if (read_container[i].CigarI > max_insertions)
-                read_container[i].keep = false;
-
-            if (read_container[i].CigarD > max_deletions)
-                read_container[i].keep = false;
-
-            if (read_container[i].maxContigDel > max_cont_deletion)
-                read_container[i].keep = false;
-        }
-        else
-        {
+        if (read_container[i].CigarI > max_insertions)
             read_container[i].keep = false;
+
+        if (read_container[i].CigarD > max_deletions)
+            read_container[i].keep = false;
+
+        if (read_container[i].maxContigDel > max_cont_deletion)
+            read_container[i].keep = false;
+
+        if (!(amplicon_input.empty()))
+        {
+
+            if (read_container[i].isReverse)
+            {
+                // reverse strand read
+                iter_start = reverseAmplicons.begin();
+                iter_end = reverseAmplicons.end();
+            }
+            else
+            {
+                // forward strand read
+                iter_start = forwardAmplicons.begin();
+                iter_end = forwardAmplicons.end();
+            }
+
+            // choose the best amplicon based on overlap
+            max_overlap = 0;
+            overlap = 0;
+            for (std::amplicon_strands::const_iterator j = iter_start; j != iter_end; ++j)
+            {
+                overlap = (*j)->readOverlap(read_container[i]);
+                if (overlap > max_overlap)
+                {
+                    max_overlap = overlap;
+                    best_amplicon = j;
+                }
+            }
+            if (max_overlap > 0)
+            {
+                processReadWithAmplicon(*(*best_amplicon), read_container[i]);
+                read_container[i].calculateLengthOnGenome();
+            }
+            else
+            {
+                read_container[i].keep = false;
+            }
         }
     }
 

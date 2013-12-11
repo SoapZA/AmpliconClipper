@@ -16,6 +16,9 @@ bool help_flag = false;
 bool amplicon_input_is_fasta = false;
 bool reference_provided = false;
 
+int n_BasesFront = 0;
+int n_BasesBack = 0;
+
 int max_insertions = INT_MAX;
 int max_deletions = INT_MAX;
 int max_cont_deletion = INT_MAX;
@@ -30,6 +33,8 @@ void about()
     std::cout << "\t -o   : output SAM file\n";
     std::cout << "\t -a   : input amplicon file\n";
     std::cout << "\t -S   : write statistics of reads\n";
+    std::cout << "\t -f   : clip N bases from the 5' of a read\n";
+    std::cout << "\t -b   : clip N bases from the 3' of a read\n";
     std::cout << "\t -I   : maximum insertions threshold\n";
     std::cout << "\t -D   : maximum deletions threshold\n";
     std::cout << "\t -C   : minimum coverage threshold as a fraction of the amplicon insert\n";
@@ -49,7 +54,7 @@ void parse_arguments(int argc, char** argv)
 {
     int c, option_index = 0;
 
-    while ((c = getopt_long (argc, argv, "i:o:a:ShI:D:C:", long_options, &option_index)) != -1)
+    while ((c = getopt_long (argc, argv, "i:o:a:Sf:b:hI:D:C:", long_options, &option_index)) != -1)
     {
         switch (c)
         {
@@ -70,6 +75,14 @@ void parse_arguments(int argc, char** argv)
 
         case 'S':
             write_statistics = true;
+            break;
+
+        case 'f':
+            n_BasesFront = atoi(optarg);
+            break;
+
+        case 'b':
+            n_BasesBack = atoi(optarg);
             break;
 
         case 'h':
